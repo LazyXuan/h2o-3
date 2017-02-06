@@ -4,6 +4,7 @@ standard_library.install_aliases()
 from builtins import range
 from past.builtins import basestring
 import sys, os
+import numpy as np
 
 try:        # works with python 2.7 not 3
     from StringIO import StringIO
@@ -38,6 +39,7 @@ import copy
 import json
 import math
 from random import shuffle
+import scipy.special
 
 
 def check_models(model1, model2, use_cross_validation=False, op='e'):
@@ -2818,3 +2820,75 @@ def cannaryHDFSTest(hdfs_name_node, file_name):
             return True
         else:       # exception is caused by other reasons.
             return False
+
+def assert_corret_frame_operation(h2oFrame, h2oNewFrame, operString):
+    """
+    This method checks each element of a numeric H2OFrame and throw an assert error if its value does not
+    equal to the same operation carried out by python.
+
+    :param h2oFrame: original H2OFrame.
+    :param h2oNewFrame: H2OFrame after operation on original H2OFrame is carried out.
+    :param operString: str representing one of 'abs', 'acos', 'acosh', 'asin', 'asinh', 'atan', 'atanh',
+        'ceil', 'cos', 'cosh', 'cospi', 'cumprod', 'cumsum', 'digamma', 'exp', 'expm1', 'floor', 'round',
+        'sin', 'sign', 'round', 'sinh', 'tan', 'tanh'
+    :return: None.
+    """
+    validStrings = ['acos', 'acosh', 'asin', 'asinh', 'atan', 'atanh', 'ceil', 'cos', 'cosh',
+                     'exp', 'floor', 'gamma', 'lgamma', 'log', 'log10', 'sin', 'sinh',
+                    'sqrt', 'tan', 'tanh', 'trigamma', 'expm1']
+    npValidStrings = ['log2', 'sign']
+    nativeStrings = ['round', 'abs', 'cumsum']
+    multpi = ['cospi', 'sinpi', 'tanpi']
+    result_val = 0.0
+
+    if operString == "log1p":
+        stringOperations = 'result_val=math.log(h2oFrame[row_ind, col_ind]+1)'
+    elif operString == 'signif':
+        stringOperations = 'result_val = round(h2oFrame[row_ind, col_ind], 7)'
+    elif operString == 'trigamma':
+        stringOperations = 'result_val = scipy.special.polygamma(1,h2oFrame[row_ind, col_ind])'
+    elif operString == 'digamma':
+        stringOperations = 'result_val = scipy.special.polygamma(0,h2oFrame[row_ind, col_ind])'
+    elif operString=='cumprod':
+        stringOperations = 'result_val = factorial(h2oFrame[row_ind, col_ind])'
+    elif operString in validStrings:
+        stringOperations = 'result_val = math.'+operString+'(h2oFrame[row_ind, col_ind])'
+    elif operString in nativeStrings:
+        stringOperations = 'result_val = '+operString+'(h2oFrame[row_ind, col_ind])'
+    elif operString in npValidStrings:
+        stringOperations = 'result_val = np.'+operString+'(h2oFrame[row_ind, col_ind])'
+    elif operString in multpi:
+        stringOperations = 'result_val = math.'+operString.split('p')[0]+'(h2oFrame[row_ind, col_ind]*math.pi)'
+    else:
+        assert False, operString+" is not a valid command."
+
+    for col_ind in range(h2oFrame.ncols):
+        for row_ind in range(h2oFrame.nrows):
+            exec(stringOperations)
+
+            if abs(h2oNewFrame[row_ind, col_ind]-result_val) > 1e-6:
+                assert False, operString+" command is not working."
+
+def factorial(n):
+    """
+    Defined my own factorial just in case using python2.5 or less.
+
+    :param n:
+    :return:
+    """
+    if n>0 and n<2:
+        return 1
+    if n>=2:
+        return n*factorial(n-1)
+
+def cumsum(n):
+    """
+    Defined my own cumsum.  Will generate sum from 1 to n.
+
+    :param n:
+    :return:
+    """
+    if n>=0:
+        return n*(n+1)/2
+    else:
+        assert False, "n must be positive."

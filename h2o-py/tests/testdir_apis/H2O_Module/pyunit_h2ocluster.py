@@ -8,11 +8,7 @@ def h2ocluster():
     """
     Python API test: h2o.cluster()
     """
-
-    try:
-        h2o.cluster()
-    except Exception as e:
-        assert False, "h2o.cluster() command not is working."
+    h2o.cluster()
 
 if __name__ == "__main__":
     pyunit_utils.standalone_test(h2ocluster)

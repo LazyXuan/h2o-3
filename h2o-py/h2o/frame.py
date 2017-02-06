@@ -38,8 +38,6 @@ from h2o.utils.typechecks import (assert_is_type, assert_satisfies, Enum, I, is_
 __all__ = ("H2OFrame", )
 
 
-
-
 class H2OFrame(object):
     """
     Primary data store for H2O.
@@ -1053,7 +1051,7 @@ class H2OFrame(object):
         Convert the frame (containing strings / categoricals) into the ``date`` format.
 
         :param str format: the format string (e.g. "YYYY-mm-dd")
-        :returns: new H2OFrame with "date" column types
+        :returns: new H2OFrame with "int" column types
         """
         fr = H2OFrame._expr(expr=ExprNode("as.Date", self, format), cache=self._ex._cache)
         if fr._ex._cache.types_valid():
@@ -1103,7 +1101,8 @@ class H2OFrame(object):
 
     def prod(self, na_rm=False):
         """
-        Compute the product of all values in the frame.
+        Compute the product of all values across all rows in a single column H2O frame.  If you apply
+        this command on a multi-column H2O frame, the answer may not be correct.
 
         :param bool na_rm: If True then NAs will be ignored during the computation.
         :returns: product of all values in the frame (a float)
@@ -1843,7 +1842,7 @@ class H2OFrame(object):
 
     def relevel(self, y):
         """
-        Reorder levels of an H2O factor.
+        Reorder levels of an H2O factor for one single column of a H2O frame
 
         The levels of a factor are reordered such that the reference level is at level 0, all remaining levels are
         moved down as needed.
@@ -2138,7 +2137,8 @@ class H2OFrame(object):
 
     def countmatches(self, pattern):
         """
-        For each string in the frame, count the occurrences of the provided pattern.
+        For each string in the frame, count the occurrences of the provided pattern.  If countmathces is applied to
+        a frame, all columns of the frame must be type string, otherwise, the returned frame will contain errors.
 
         The pattern here is a plain string, not a regular expression. We will search for the occurrences of the
         pattern as a substring in element of the frame. This function is applicable to frames containing only
@@ -2496,8 +2496,8 @@ class H2OFrame(object):
         """
         Conduct a diff-1 transform on a numeric frame column.
 
-        :returns: an H2OFrame where each element is equal to the corresponding element in the source
-        frame minus the previous-row element in the same frame.
+        :returns: a single-column H2OFrame where each element is equal to the corresponding element in the source
+            frame minus the previous-row element in the same frame.
         """
         fr = H2OFrame._expr(expr=ExprNode("difflag1", self), cache=self._ex._cache)
         return fr

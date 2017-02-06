@@ -9,11 +9,7 @@ def h2ocluster_status():
     Python API test: h2o.cluster_status()
     Deprecated, use h2o.cluster().show_status(True)
     """
-    try:
-        h2o.cluster_status()    # no return type
-    except Exception as e:
-        assert False, "h2o.cluster_status() command is not working."
-
+    h2o.cluster_status()    # no return type
 
 if __name__ == "__main__":
     pyunit_utils.standalone_test(h2ocluster_status)

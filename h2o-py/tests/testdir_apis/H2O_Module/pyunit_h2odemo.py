@@ -10,11 +10,7 @@ def h2odemo():
 
     Copied from pyunit_glm_demo.py
     """
-
-    try:
-        h2o.demo(funcname="glm", interactive=False, echo=True, test=True)
-    except Exception as e:
-        assert False, "h2o.demo() command not is working."
+    h2o.demo(funcname="glm", interactive=False, echo=True, test=True)
 
 if __name__ == "__main__":
     pyunit_utils.standalone_test(h2odemo)
